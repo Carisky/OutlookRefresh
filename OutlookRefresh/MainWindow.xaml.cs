@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -23,9 +21,34 @@ namespace OutlookRefresh
     /// </summary>
     public sealed partial class MainWindow : Window
     {
+        public ObservableCollection<PstFileInfo> PstFiles { get; } = new();
+
         public MainWindow()
         {
             InitializeComponent();
+            LoadPstFiles();
+        }
+
+        private void LoadPstFiles()
+        {
+            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            try
+            {
+                var files = Directory.GetFiles(home, "*.pst", SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    double sizeGb = new FileInfo(file).Length / (1024.0 * 1024 * 1024);
+                    var color = sizeGb < 35 ? Windows.UI.Color.FromArgb(128, 0, 255, 0) :
+                                 sizeGb < 45 ? Windows.UI.Color.FromArgb(128, 255, 165, 0) :
+                                 Windows.UI.Color.FromArgb(128, 255, 0, 0);
+                    var brush = new SolidColorBrush(color);
+                    PstFiles.Add(new PstFileInfo { Path = file, SizeGb = sizeGb, Background = brush });
+                }
+            }
+            catch
+            {
+                // ignore errors scanning directories
+            }
         }
     }
 }
