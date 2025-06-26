@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "OutlookRefresh (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "OutlookRefresh (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
