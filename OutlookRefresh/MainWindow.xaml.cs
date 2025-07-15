@@ -31,23 +31,32 @@ namespace OutlookRefresh
 
         private void LoadPstFiles()
         {
-            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
             try
             {
-                var files = Directory.GetFiles(home, "*.pst", SearchOption.AllDirectories);
-                foreach (var file in files)
+                var outlookDirs = Directory.GetDirectories(documents, "*Outlook*", SearchOption.AllDirectories);
+
+                foreach (var dir in outlookDirs)
                 {
-                    double sizeGb = new FileInfo(file).Length / (1024.0 * 1024 * 1024);
-                    var color = sizeGb < 35 ? Windows.UI.Color.FromArgb(128, 0, 255, 0) :
-                                 sizeGb < 45 ? Windows.UI.Color.FromArgb(128, 255, 165, 0) :
-                                 Windows.UI.Color.FromArgb(128, 255, 0, 0);
-                    var brush = new SolidColorBrush(color);
-                    PstFiles.Add(new PstFileInfo { Path = file, SizeGb = sizeGb, Background = brush });
+                    var files = Directory.GetFiles(dir, "*.pst", SearchOption.TopDirectoryOnly);
+
+                    foreach (var file in files)
+                    {
+                        double sizeGb = new FileInfo(file).Length / (1024.0 * 1024 * 1024);
+                        var color = sizeGb < 35 ? Microsoft.UI.Colors.LightGreen :
+                                     sizeGb < 45 ? Microsoft.UI.Colors.Orange :
+                                     Microsoft.UI.Colors.Red;
+                        var brush = new SolidColorBrush(color);
+
+
+                        PstFiles.Add(new PstFileInfo { Path = file, SizeGb = sizeGb, Background = brush });
+                    }
                 }
             }
             catch
             {
-                // ignore errors scanning directories
+                // ignore errors
             }
         }
     }

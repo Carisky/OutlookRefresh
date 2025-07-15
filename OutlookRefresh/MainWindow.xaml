@@ -23,7 +23,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{x:Bind Path}" Margin="4" />
-                        <TextBlock Text="{x:Bind SizeGb, Mode=OneWay, StringFormat=\"{0:F1} GB\"}" Grid.Column="1" Margin="4" />
+                        <TextBlock Text="{x:Bind SizeGbFormatted}" Margin="4" Grid.Column="1" />
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
