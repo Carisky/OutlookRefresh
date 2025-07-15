@@ -14,19 +14,22 @@
     </Window.SystemBackdrop>
 
     <Grid>
-        <ListView ItemsSource="{x:Bind PstFiles}">
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="local:PstFileInfo">
-                    <Grid Background="{x:Bind Background}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="{x:Bind Path}" Margin="4" />
-                        <TextBlock Text="{x:Bind SizeGbFormatted}" Margin="4" Grid.Column="1" />
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+        <StackPanel>
+            <Button Content="Create New PST" Click="CreatePstClicked" Margin="4" />
+            <ListView ItemsSource="{x:Bind PstFiles}">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="local:PstFileInfo">
+                        <Grid Background="{x:Bind Background}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{x:Bind Path}" Margin="4" />
+                            <TextBlock Text="{x:Bind SizeGbFormatted}" Margin="4" Grid.Column="1" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </StackPanel>
     </Grid>
 </Window>
