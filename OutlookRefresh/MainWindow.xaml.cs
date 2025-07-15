@@ -76,9 +76,44 @@ namespace OutlookRefresh
             if (!path.EndsWith(".pst", StringComparison.OrdinalIgnoreCase))
                 path += ".pst";
 
+            bool copyStructure = false;
+            string? sourcePath = null;
+
+            var checkCopy = new CheckBox { Content = "Copy folder structure" };
+            var combo = new ComboBox
+            {
+                ItemsSource = PstFiles,
+                DisplayMemberPath = nameof(PstFileInfo.Path),
+                IsEnabled = false
+            };
+            checkCopy.Checked += (_, _) => combo.IsEnabled = true;
+            checkCopy.Unchecked += (_, _) => combo.IsEnabled = false;
+
+            var dialogContent = new StackPanel();
+            dialogContent.Children.Add(checkCopy);
+            dialogContent.Children.Add(combo);
+
+            var copyDialog = new ContentDialog
+            {
+                Title = "Copy Folder Structure",
+                Content = dialogContent,
+                PrimaryButtonText = "OK",
+                CloseButtonText = "Cancel"
+            };
+            InitializeWithWindow.Initialize(copyDialog, hwnd);
+            var result = await copyDialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                copyStructure = checkCopy.IsChecked == true;
+                if (copyStructure)
+                {
+                    sourcePath = (combo.SelectedItem as PstFileInfo)?.Path;
+                }
+            }
+
             try
             {
-                CreateAndSetDefaultPst(path);
+                CreateAndSetDefaultPst(path, copyStructure, sourcePath);
             }
             catch (Exception ex)
             {
@@ -96,16 +131,60 @@ namespace OutlookRefresh
             LoadPstFiles();
         }
 
-        private void CreateAndSetDefaultPst(string path)
+        private void CreateAndSetDefaultPst(string path, bool copyStructure, string? sourcePath)
         {
             var outlook = new Outlook.Application();
             Outlook.NameSpace ns = outlook.GetNamespace("MAPI");
             ns.AddStoreEx(path, Outlook.OlStoreType.olStoreUnicode);
 
+            Outlook.Store? newStore = null;
+            foreach (Outlook.Store store in ns.Stores)
+            {
+                if (string.Equals(store.FilePath, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    newStore = store;
+                    break;
+                }
+            }
+
+            if (copyStructure && !string.IsNullOrEmpty(sourcePath))
+            {
+                ns.AddStoreEx(sourcePath, Outlook.OlStoreType.olStoreUnicode);
+
+                Outlook.Store? srcStore = null;
+                foreach (Outlook.Store store in ns.Stores)
+                {
+                    if (string.Equals(store.FilePath, sourcePath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        srcStore = store;
+                        break;
+                    }
+                }
+
+                if (srcStore != null && newStore != null)
+                {
+                    CopyFolderStructure(srcStore.GetRootFolder(), newStore.GetRootFolder());
+                }
+
+                if (srcStore != null)
+                {
+                    ns.RemoveStore(srcStore.GetRootFolder());
+                }
+            }
+
             // Attempt to set new store as default for the active account.
             // Outlook object model does not expose a direct way to change the
             // default delivery store. This placeholder shows where such logic
             // would be implemented using extended MAPI or other means.
+        }
+
+        private static void CopyFolderStructure(Outlook.MAPIFolder source, Outlook.MAPIFolder target)
+        {
+            foreach (Outlook.MAPIFolder child in source.Folders)
+            {
+                var newChild = target.Folders.Add(child.Name, child.DefaultItemType);
+                CopyFolderStructure(child, newChild);
+            }
         }
     }
 }
