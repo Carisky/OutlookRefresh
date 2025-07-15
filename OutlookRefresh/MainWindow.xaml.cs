@@ -35,23 +35,20 @@ namespace OutlookRefresh
 
             try
             {
-                var outlookDirs = Directory.GetDirectories(documents, "*Outlook*", SearchOption.AllDirectories);
+                var files = Directory.EnumerateFiles(
+                    documents,
+                    "*.pst",
+                    new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true });
 
-                foreach (var dir in outlookDirs)
+                foreach (var file in files)
                 {
-                    var files = Directory.GetFiles(dir, "*.pst", SearchOption.TopDirectoryOnly);
+                    double sizeGb = new FileInfo(file).Length / (1024.0 * 1024 * 1024);
+                    var color = sizeGb < 35 ? Microsoft.UI.Colors.LightGreen :
+                                 sizeGb < 45 ? Microsoft.UI.Colors.Orange :
+                                 Microsoft.UI.Colors.Red;
+                    var brush = new SolidColorBrush(color);
 
-                    foreach (var file in files)
-                    {
-                        double sizeGb = new FileInfo(file).Length / (1024.0 * 1024 * 1024);
-                        var color = sizeGb < 35 ? Microsoft.UI.Colors.LightGreen :
-                                     sizeGb < 45 ? Microsoft.UI.Colors.Orange :
-                                     Microsoft.UI.Colors.Red;
-                        var brush = new SolidColorBrush(color);
-
-
-                        PstFiles.Add(new PstFileInfo { Path = file, SizeGb = sizeGb, Background = brush });
-                    }
+                    PstFiles.Add(new PstFileInfo { Path = file, SizeGb = sizeGb, Background = brush });
                 }
             }
             catch
