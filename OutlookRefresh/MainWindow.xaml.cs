@@ -1,6 +1,10 @@
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using Windows.Storage.Pickers;
+using Windows.Storage;
+using WinRT.Interop;
+using Outlook = Microsoft.Office.Interop.Outlook;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -55,6 +59,53 @@ namespace OutlookRefresh
             {
                 // ignore errors
             }
+        }
+
+        private async void CreatePstClicked(object sender, RoutedEventArgs e)
+        {
+            var picker = new FileSavePicker();
+            var hwnd = WindowNative.GetWindowHandle(this);
+            InitializeWithWindow.Initialize(picker, hwnd);
+            picker.FileTypeChoices.Add("Outlook Data File", new[] { ".pst" });
+            picker.SuggestedFileName = "NewDataFile";
+            StorageFile? file = await picker.PickSaveFileAsync();
+            if (file == null)
+                return;
+
+            var path = file.Path;
+            if (!path.EndsWith(".pst", StringComparison.OrdinalIgnoreCase))
+                path += ".pst";
+
+            try
+            {
+                CreateAndSetDefaultPst(path);
+            }
+            catch (Exception ex)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Error",
+                    Content = ex.Message,
+                    CloseButtonText = "OK"
+                };
+                InitializeWithWindow.Initialize(dialog, hwnd);
+                await dialog.ShowAsync();
+            }
+
+            PstFiles.Clear();
+            LoadPstFiles();
+        }
+
+        private void CreateAndSetDefaultPst(string path)
+        {
+            var outlook = new Outlook.Application();
+            Outlook.NameSpace ns = outlook.GetNamespace("MAPI");
+            ns.AddStoreEx(path, Outlook.OlStoreType.olStoreUnicode);
+
+            // Attempt to set new store as default for the active account.
+            // Outlook object model does not expose a direct way to change the
+            // default delivery store. This placeholder shows where such logic
+            // would be implemented using extended MAPI or other means.
         }
     }
 }
